@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { resolveCookieFile } from './config.mjs';
 import { SessionProvider } from './session.mjs';
 import { cleanError, toolError } from './youtube/errors.mjs';
@@ -24,7 +26,9 @@ export function buildServer({ cookieFile = resolveCookieFile() } = {}) {
 
 function isMain() {
   if (!process.argv[1]) return false;
-  try { return new URL(`file://${process.argv[1]}`).href === import.meta.url; } catch { return false; }
+  // npm exposes bin entries as symlinks on Unix. Resolve both sides so the
+  // packaged executable is recognized just as the source entrypoint is.
+  try { return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url)); } catch { return false; }
 }
 
 if (isMain()) {

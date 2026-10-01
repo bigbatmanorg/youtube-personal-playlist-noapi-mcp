@@ -4,13 +4,34 @@ Manage your own YouTube playlists from any MCP-capable agent using your existing
 
 This package is a local **stdio MCP executable**, not a backend service. The agent starts it when needed and it exits with the agent/client.
 
-## Install / run
+## Run directly from GitHub
+
+Prerequisite: Node.js 20 or newer. No clone, global install, or npm registry publish is required.
 
 ```bash
-npx -y @bigbatmanorg/youtube-personal-playlist-noapi-mcp@1.0.0
+YOUTUBE_COOKIE_FILE="$HOME/.config/youtube-personal-playlist-noapi-mcp/cookies.txt" \
+  npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#main
 ```
 
-The MCP can start with no credentials. Paste your cookies to the agent and have it call `youtube_cookie_set`.
+This is a stdio MCP executable: use it as the command in an MCP client, rather than expecting a terminal UI. It can start with no credentials; paste cookies to a trusted agent and have it call `youtube_cookie_set`.
+
+For npm versions that require Git-package opt-in, use the equivalent per-command flag supported by that npm version. This repository tests the simple command above with npm 11; the README will be updated with a tested npm 12 form when npm 12 support is verified.
+
+### MCP client configuration
+
+```json
+{
+  "mcpServers": {
+    "youtube-playlists": {
+      "command": "npx",
+      "args": ["-y", "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#main"],
+      "env": {
+        "YOUTUBE_COOKIE_FILE": "/absolute/path/to/cookies.txt"
+      }
+    }
+  }
+}
+```
 
 ## Cookie location
 
@@ -29,13 +50,13 @@ Example custom location:
 
 ```bash
 YOUTUBE_COOKIE_FILE="$HOME/.config/my-youtube/cookies.txt" \
-  npx -y @bigbatmanorg/youtube-personal-playlist-noapi-mcp@1.0.0
+  npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#main
 ```
 
 or:
 
 ```bash
-npx -y @bigbatmanorg/youtube-personal-playlist-noapi-mcp@1.0.0 \
+npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#main \
   --cookie-file "$HOME/.config/my-youtube/cookies.txt"
 ```
 
@@ -114,7 +135,7 @@ npm run test:package
 
 ## Docker Agent example
 
-See `examples/docker-agent.yaml`. After publishing, the MCP can be consumed directly through `npx`; there is no MCP source code to copy into every agent project.
+See `examples/docker-agent.yaml`. The MCP can be consumed directly from GitHub through `npx`; there is no MCP source code to copy into every agent project.
 
 ## Upgrade policy
 
@@ -139,3 +160,9 @@ Then run `npm run test:full` with a real pasted cookie. Treat `RESULT: READY` fr
 ## Security note
 
 YouTube browser cookies are account credentials. `youtube_cookie_set` exists specifically for users who deliberately want to paste those credentials through their MCP-capable agent. The server never echoes stored cookie values and sanitizes known cookie fields from returned errors. Use only with agents/frontends you trust.
+
+## Troubleshooting
+
+- `COOKIE_FILE_NOT_FOUND` means the configured cookie path does not exist yet. Start the MCP without credentials and use `youtube_cookie_set`, or provide the correct absolute `YOUTUBE_COOKIE_FILE` path.
+- `NOT_LOGGED_IN` means the exported YouTube cookies have expired or do not authenticate the intended account. Export fresh cookies and set them again.
+- If an npm release blocks Git dependencies, consult that npm version's `npx --help` for its per-command Git opt-in; do not disable npm security globally.

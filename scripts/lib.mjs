@@ -6,11 +6,15 @@ import { fileURLToPath } from 'node:url';
 export const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export async function openMcpClient(cookieFile) {
+export async function openMcpClient(cookieFile, {
+  command = process.execPath,
+  args = ['src/server.mjs', '--cookie-file', cookieFile],
+  cwd = packageRoot
+} = {}) {
   const transport = new StdioClientTransport({
-    command: process.execPath,
-    args: ['src/server.mjs', '--cookie-file', cookieFile],
-    cwd: packageRoot,
+    command,
+    args,
+    cwd,
     env: { ...process.env, YOUTUBE_COOKIE_FILE: cookieFile },
     stderr: 'pipe'
   });

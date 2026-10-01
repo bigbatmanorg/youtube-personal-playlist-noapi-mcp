@@ -13,6 +13,6 @@ agents:
         command: npx
         args:
           - -y
-          - "@bigbatmanorg/youtube-personal-playlist-noapi-mcp@1.0.0"
+          - "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#main"
         env:
           YOUTUBE_COOKIE_FILE: "${HOME}/.config/youtube-personal-playlist-noapi-mcp/cookies.txt"

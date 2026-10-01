@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { openMcpClient } from './lib.mjs';
+import { closeMcpClient, openMcpClient } from './lib.mjs';
 const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'yt-mcp-empty-'));
 const cookieFile = path.join(dir, 'cookies.txt');
 let client;
@@ -16,6 +16,6 @@ try {
   console.log('PASS 11 tools exposed');
   console.log(`PASS cookie destination ${status.cookie_file}`);
 } finally {
-  if (client) await client.close().catch(() => {});
+  if (client) await closeMcpClient(client).catch(() => {});
   await fs.rm(dir, { recursive: true, force: true });
 }
