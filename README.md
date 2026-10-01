@@ -15,7 +15,12 @@ YOUTUBE_COOKIE_FILE="$HOME/.config/youtube-personal-playlist-noapi-mcp/cookies.t
 
 This is a stdio MCP executable: use it as the command in an MCP client, rather than expecting a terminal UI. It can start with no credentials; paste cookies to a trusted agent and have it call `youtube_cookie_set`.
 
-For npm versions that require Git-package opt-in, use the equivalent per-command flag supported by that npm version. This repository tests the simple command above with npm 11; the README will be updated with a tested npm 12 form when npm 12 support is verified.
+The command above is verified with npm 11.19.1. npm 12.2.0 disables Git dependencies by default; use the tested npm 12 command below instead.
+
+```bash
+YOUTUBE_COOKIE_FILE="$HOME/.config/youtube-personal-playlist-noapi-mcp/cookies.txt" \
+  npm exec --yes --allow-git=all github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#main
+```
 
 ### MCP client configuration
 
@@ -30,6 +35,15 @@ For npm versions that require Git-package opt-in, use the equivalent per-command
       }
     }
   }
+}
+```
+
+For npm 12, use this configuration instead:
+
+```json
+{
+  "command": "npm",
+  "args": ["exec", "--yes", "--allow-git=all", "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#main"]
 }
 ```
 
@@ -165,4 +179,4 @@ YouTube browser cookies are account credentials. `youtube_cookie_set` exists spe
 
 - `COOKIE_FILE_NOT_FOUND` means the configured cookie path does not exist yet. Start the MCP without credentials and use `youtube_cookie_set`, or provide the correct absolute `YOUTUBE_COOKIE_FILE` path.
 - `NOT_LOGGED_IN` means the exported YouTube cookies have expired or do not authenticate the intended account. Export fresh cookies and set them again.
-- If an npm release blocks Git dependencies, consult that npm version's `npx --help` for its per-command Git opt-in; do not disable npm security globally.
+- npm 12 reporting `EALLOWGIT` requires the per-command `--allow-git=all` flag shown above. Do not disable npm security globally.
