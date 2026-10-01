@@ -1,0 +1,42 @@
+{
+  "name": "@bigbatmanorg/youtube-personal-playlist-noapi-mcp",
+  "version": "1.0.0",
+  "description": "Manage your personal YouTube playlists through MCP using browser cookies. No Google API key or OAuth app required.",
+  "type": "module",
+  "bin": {
+    "youtube-personal-playlist-noapi-mcp": "./src/server.mjs"
+  },
+  "files": [
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node src/server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "verify": "node scripts/verify.mjs",
+    "test:live": "node scripts/live-test.mjs",
+    "test:mcp": "node scripts/mcp-smoke.mjs",
+    "test:full": "node scripts/full-cycle-test.mjs",
+    "test:package": "node scripts/package-test.mjs",
+    "test:upgrade": "node scripts/upgrade-test.mjs",
+    "release:check": "npm test && node scripts/mcp-offline-smoke.mjs && npm run test:package"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.31.0",
+    "youtubei.js": "18.1.0",
+    "zod": "3.25.76"
+  },
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "youtube",
+    "playlist",
+    "youtubei",
+    "cookies",
+    "no-api-key"
+  ]
+}

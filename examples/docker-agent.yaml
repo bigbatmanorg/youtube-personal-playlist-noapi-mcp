@@ -1,0 +1,18 @@
+version: "1"
+agents:
+  root:
+    model: litellm/brain-agent
+    description: Personal YouTube playlist assistant using browser-cookie authentication.
+    instruction: |
+      Use the YouTube MCP for authenticated playlist operations.
+      If cookies are not configured, ask the user to paste their YouTube cookies and call youtube_cookie_set.
+      Resolve ambiguous playlist names before modifying anything.
+      Never claim a write succeeded unless the MCP confirms it.
+    toolsets:
+      - type: mcp
+        command: npx
+        args:
+          - -y
+          - "@bigbatmanorg/youtube-personal-playlist-noapi-mcp@1.0.0"
+        env:
+          YOUTUBE_COOKIE_FILE: "${HOME}/.config/youtube-personal-playlist-noapi-mcp/cookies.txt"
