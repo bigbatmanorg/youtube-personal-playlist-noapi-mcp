@@ -22,30 +22,406 @@ YOUTUBE_COOKIE_FILE="$HOME/.config/youtube-personal-playlist-noapi-mcp/cookies.t
   npm exec --yes --allow-git=all github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0
 ```
 
-### MCP client configuration
+<!-- install:start -->
+## Install in your agent
+
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_youtube--playlists-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=youtube-playlists&inputs=%5B%7B%22type%22%3A%22promptString%22%2C%22id%22%3A%22youtube_cookie_file%22%2C%22description%22%3A%22Where%20cookies%20are%20stored%20%28optional%29%22%2C%22password%22%3Afalse%7D%5D&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22npm%22%2C%22args%22%3A%5B%22exec%22%2C%22--yes%22%2C%22--allow-git%3Dall%22%2C%22github%3Abigbatmanorg/youtube-personal-playlist-noapi-mcp%23v1.2.0%22%5D%2C%22env%22%3A%7B%22YOUTUBE_COOKIE_FILE%22%3A%22%24%7Binput%3Ayoutube_cookie_file%7D%22%7D%7D)
+[![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_youtube--playlists-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=youtube-playlists&inputs=%5B%7B%22type%22%3A%22promptString%22%2C%22id%22%3A%22youtube_cookie_file%22%2C%22description%22%3A%22Where%20cookies%20are%20stored%20%28optional%29%22%2C%22password%22%3Afalse%7D%5D&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22npm%22%2C%22args%22%3A%5B%22exec%22%2C%22--yes%22%2C%22--allow-git%3Dall%22%2C%22github%3Abigbatmanorg/youtube-personal-playlist-noapi-mcp%23v1.2.0%22%5D%2C%22env%22%3A%7B%22YOUTUBE_COOKIE_FILE%22%3A%22%24%7Binput%3Ayoutube_cookie_file%7D%22%7D%7D&quality=insiders)
+[![Install in Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en-US/install-mcp?name=youtube-playlists&config=eyJjb21tYW5kIjoibnBtIiwiYXJncyI6WyJleGVjIiwiLS15ZXMiLCItLWFsbG93LWdpdD1hbGwiLCJnaXRodWI6YmlnYmF0bWFub3JnL3lvdXR1YmUtcGVyc29uYWwtcGxheWxpc3Qtbm9hcGktbWNwI3YxLjIuMCJdLCJlbnYiOnsiWU9VVFVCRV9DT09LSUVfRklMRSI6Ii9ob21lL3lvdS8uY29uZmlnL3lvdXR1YmUtcGVyc29uYWwtcGxheWxpc3Qtbm9hcGktbWNwL2Nvb2tpZXMudHh0In19)
+
+It works with any MCP client that can start a stdio command. It needs Node.js 20+. `npm exec` fetches the pinned release from GitHub, so no clone or registry install is needed. Pick your agent below.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `YOUTUBE_COOKIE_FILE` | Where cookies are stored (optional) | `/home/you/.config/youtube-personal-playlist-noapi-mcp/cookies.txt` |
+
+`YOUTUBE_COOKIE_FILE` is optional and defaults to `~/.config/youtube-personal-playlist-noapi-mcp/cookies.txt`. With no cookies yet, paste them to the agent and it calls `youtube_cookie_set`. The `npm exec --allow-git=all` form works with npm 11 and 12 (npm 12 disables Git dependencies by default).
+
+The VS Code buttons ask for each value, keeping secrets out of files. The Cursor button writes placeholders: edit them in `~/.cursor/mcp.json` afterwards. Elsewhere, replace the example values.
+
+<details>
+<summary><b>Claude Code</b></summary>
+
+```bash
+claude mcp add youtube-playlists -s user -e YOUTUBE_COOKIE_FILE=/home/you/.config/youtube-personal-playlist-noapi-mcp/cookies.txt -- npm exec --yes --allow-git=all 'github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0'
+```
+
+</details>
+
+<details>
+<summary><b>Claude Desktop</b></summary>
+
+Settings → Developer → Edit Config (`claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
     "youtube-playlists": {
-      "command": "npx",
-      "args": ["-y", "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"],
+      "command": "npm",
+      "args": [
+        "exec",
+        "--yes",
+        "--allow-git=all",
+        "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"
+      ],
       "env": {
-        "YOUTUBE_COOKIE_FILE": "/absolute/path/to/cookies.txt"
+        "YOUTUBE_COOKIE_FILE": "/home/you/.config/youtube-personal-playlist-noapi-mcp/cookies.txt"
       }
     }
   }
 }
 ```
 
-For npm 12, use this configuration instead:
+</details>
+
+<details>
+<summary><b>VS Code / GitHub Copilot</b></summary>
+
+Use the button above, or add this to `.vscode/mcp.json` (workspace) or to the user `mcp.json` (command
+*MCP: Open User Configuration*):
 
 ```json
 {
-  "command": "npm",
-  "args": ["exec", "--yes", "--allow-git=all", "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"]
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "youtube_cookie_file",
+      "description": "Where cookies are stored (optional)",
+      "password": false
+    }
+  ],
+  "servers": {
+    "youtube-playlists": {
+      "type": "stdio",
+      "command": "npm",
+      "args": [
+        "exec",
+        "--yes",
+        "--allow-git=all",
+        "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"
+      ],
+      "env": {
+        "YOUTUBE_COOKIE_FILE": "${input:youtube_cookie_file}"
+      }
+    }
+  }
 }
 ```
+
+</details>
+
+<details>
+<summary><b>Cursor</b></summary>
+
+Use the button above, or add this to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project):
+
+```json
+{
+  "mcpServers": {
+    "youtube-playlists": {
+      "command": "npm",
+      "args": [
+        "exec",
+        "--yes",
+        "--allow-git=all",
+        "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"
+      ],
+      "env": {
+        "YOUTUBE_COOKIE_FILE": "/home/you/.config/youtube-personal-playlist-noapi-mcp/cookies.txt"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Windsurf</b></summary>
+
+Add this to `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "youtube-playlists": {
+      "command": "npm",
+      "args": [
+        "exec",
+        "--yes",
+        "--allow-git=all",
+        "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"
+      ],
+      "env": {
+        "YOUTUBE_COOKIE_FILE": "/home/you/.config/youtube-personal-playlist-noapi-mcp/cookies.txt"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>OpenAI Codex CLI</b></summary>
+
+```bash
+codex mcp add youtube-playlists --env YOUTUBE_COOKIE_FILE=/home/you/.config/youtube-personal-playlist-noapi-mcp/cookies.txt -- npm exec --yes --allow-git=all 'github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0'
+```
+
+Or add this to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.youtube-playlists]
+command = "npm"
+args = ["exec", "--yes", "--allow-git=all", "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"]
+env = { YOUTUBE_COOKIE_FILE = "/home/you/.config/youtube-personal-playlist-noapi-mcp/cookies.txt" }
+```
+
+</details>
+
+<details>
+<summary><b>Gemini CLI</b></summary>
+
+Add this to `~/.gemini/settings.json` (or to `.gemini/settings.json` in a project):
+
+```json
+{
+  "mcpServers": {
+    "youtube-playlists": {
+      "command": "npm",
+      "args": [
+        "exec",
+        "--yes",
+        "--allow-git=all",
+        "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"
+      ],
+      "env": {
+        "YOUTUBE_COOKIE_FILE": "/home/you/.config/youtube-personal-playlist-noapi-mcp/cookies.txt"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>DeepAgents</b></summary>
+
+**Deep Agents CLI:** add this to `~/.deepagents/.mcp.json` (all projects) or to `.mcp.json` in a project. `${VAR}` values are read from your shell or `~/.deepagents/.env`, so secrets stay out of the file.
+
+```json
+{
+  "mcpServers": {
+    "youtube-playlists": {
+      "command": "npm",
+      "args": [
+        "exec",
+        "--yes",
+        "--allow-git=all",
+        "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"
+      ],
+      "env": {
+        "YOUTUBE_COOKIE_FILE": "${YOUTUBE_COOKIE_FILE}"
+      }
+    }
+  }
+}
+```
+
+**Python library** (`pip install deepagents langchain-mcp-adapters`):
+
+```python
+import asyncio
+import os
+
+from deepagents import create_deep_agent
+from langchain_mcp_adapters.client import MultiServerMCPClient
+
+client = MultiServerMCPClient({
+    "youtube-playlists": {
+        "transport": "stdio",
+        "command": "npm",
+        "args": ["exec", "--yes", "--allow-git=all", "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"],
+        "env": {
+            "YOUTUBE_COOKIE_FILE": os.environ["YOUTUBE_COOKIE_FILE"],
+        },
+    }
+})
+
+
+async def main():
+    tools = await client.get_tools()
+    agent = create_deep_agent(model="anthropic:claude-sonnet-5-5", tools=tools)
+    result = await agent.ainvoke({"messages": [{"role": "user", "content": "What can you do?"}]})
+    print(result["messages"][-1].content)
+
+
+asyncio.run(main())
+```
+
+</details>
+
+<details>
+<summary><b>Docker Agent</b></summary>
+
+Save this as `agent.yaml`, then run `docker agent run agent.yaml`:
+
+```yaml
+agents:
+  root:
+    model: anthropic/claude-sonnet-5-5
+    description: Assistant with the youtube-playlists MCP tools
+    instruction: Use the youtube-playlists tools to answer the user's requests.
+    toolsets:
+      - type: mcp
+        command: npm
+        args:
+          - "exec"
+          - "--yes"
+          - "--allow-git=all"
+          - "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"
+        env:
+          YOUTUBE_COOKIE_FILE: "/home/you/.config/youtube-personal-playlist-noapi-mcp/cookies.txt"
+```
+
+</details>
+
+<details>
+<summary><b>Hermes Agent</b></summary>
+
+Add this to `~/.hermes/config.yaml`, then run `/reload-mcp` in a chat:
+
+```yaml
+mcp_servers:
+  youtube-playlists:
+    command: npm
+    args: ["exec", "--yes", "--allow-git=all", "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"]
+    env:
+      YOUTUBE_COOKIE_FILE: "/home/you/.config/youtube-personal-playlist-noapi-mcp/cookies.txt"
+```
+
+</details>
+
+<details>
+<summary><b>Cline / Roo Code / Kilo Code</b></summary>
+
+MCP Servers → Configure (`cline_mcp_settings.json` / `mcp_settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "youtube-playlists": {
+      "command": "npm",
+      "args": [
+        "exec",
+        "--yes",
+        "--allow-git=all",
+        "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"
+      ],
+      "env": {
+        "YOUTUBE_COOKIE_FILE": "/home/you/.config/youtube-personal-playlist-noapi-mcp/cookies.txt"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Zed</b></summary>
+
+Add this to `settings.json`:
+
+```json
+{
+  "context_servers": {
+    "youtube-playlists": {
+      "command": "npm",
+      "args": [
+        "exec",
+        "--yes",
+        "--allow-git=all",
+        "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"
+      ],
+      "env": {
+        "YOUTUBE_COOKIE_FILE": "/home/you/.config/youtube-personal-playlist-noapi-mcp/cookies.txt"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>opencode</b></summary>
+
+Add this to `opencode.json` (project) or `~/.config/opencode/opencode.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "youtube-playlists": {
+      "type": "local",
+      "command": [
+        "npm",
+        "exec",
+        "--yes",
+        "--allow-git=all",
+        "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"
+      ],
+      "environment": {
+        "YOUTUBE_COOKIE_FILE": "/home/you/.config/youtube-personal-playlist-noapi-mcp/cookies.txt"
+      },
+      "enabled": true
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Goose</b></summary>
+
+Run `goose configure` → Add Extension → Command-line Extension, with the command `npm exec --yes --allow-git=all 'github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0'`. Or add this to
+`~/.config/goose/config.yaml`:
+
+```yaml
+extensions:
+  youtube-playlists:
+    type: stdio
+    enabled: true
+    cmd: npm
+    args: ["exec", "--yes", "--allow-git=all", "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"]
+    envs:
+      YOUTUBE_COOKIE_FILE: "/home/you/.config/youtube-personal-playlist-noapi-mcp/cookies.txt"
+```
+
+</details>
+
+<details>
+<summary><b>Other clients, a permanent install, a local checkout</b></summary>
+
+Most clients take the standard `mcpServers` JSON shown for Claude Desktop. Some use `servers` instead.
+
+To install once instead of fetching on each start:
+
+```bash
+npm install -g github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0
+```
+
+then use `"command": "youtube-personal-playlist-noapi-mcp"`, `"args": []`.
+
+From a checkout: `"command": "node"`, `"args": ["/abs/path/youtube-personal-playlist-noapi-mcp/src/server.mjs"]`.
+
+</details>
+
+<!-- install:end -->
 
 ## Cookie location
 
