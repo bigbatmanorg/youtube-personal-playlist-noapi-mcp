@@ -35,6 +35,29 @@ try {
     }
     return [videoId, ...extraIds].every((id) => ids.includes(id)) && ids.length === 3;
   }, 'Paged read did not return all three videos'));
+  await run('ITEM_DETAILS', async () => {
+    const { videos } = await ops.getPlaylist(playlistId, { limit: 10 });
+    if (!videos.every((v) => v.duration_seconds > 0 && v.channel && v.playable === true && v.url)) throw new Error(`Missing item details: ${JSON.stringify(videos[0])}`);
+  });
+  await run('ADD_DUPLICATE', () => ops.addVideos(playlistId, [videoId]));
+  await run('STATS', () => waitFor(async () => {
+    const stats = await ops.playlistStats(playlistId);
+    return stats.video_count === 4 && stats.duplicate_count === 1 && stats.total_seconds > 0 && stats.top_channels.length > 0;
+  }, 'Stats did not report 4 videos with 1 duplicate'));
+  const cleanup = await run('CLEANUP_PREVIEW', () => waitFor(async () => {
+    const preview = await ops.previewCleanup(playlistId, { remove: ['duplicate'] });
+    return preview.remove_count === 1 && preview.to_remove[0].video_id === videoId && preview.to_remove[0].position === 4 ? preview : false;
+  }, 'Preview did not find exactly the duplicate'));
+  await run('CLEANUP_APPLY', async () => {
+    const plan = await ops.previewCleanup(playlistId, { remove: ['duplicate'] });
+    if (plan.plan_token !== cleanup.plan_token) throw new Error('Preview was not stable');
+    const result = await ops.applyCleanup(playlistId, { remove: ['duplicate'], planToken: plan.plan_token });
+    if (result.removed !== 1) throw new Error(`Removed ${result.removed}`);
+  });
+  await run('VERIFY_CLEANUP', () => waitFor(async () => {
+    const stats = await ops.playlistStats(playlistId);
+    return stats.video_count === 3 && stats.duplicate_count === 0;
+  }, 'Duplicate still present after clean-up'));
   await run('REMOVE_MISSING_REPORTS_ID', async () => {
     try { await ops.removeVideos(playlistId, [videoId, 'aaaaaaaaaaa']); } catch (error) {
       if (/VIDEO_NOT_FOUND: .*aaaaaaaaaaa/.test(String(error?.message))) return;

@@ -23,7 +23,7 @@ if (!pasted.trim()) {
 
 try {
   ({ client } = await openMcpClient(cookieFile));
-  await run('MCP_INITIALIZE_EMPTY_OK', async () => { const tools = await client.listTools(); if (tools.tools.length < 11) throw new Error('Toolset incomplete'); });
+  await run('MCP_INITIALIZE_EMPTY_OK', async () => { const tools = await client.listTools(); if (tools.tools.length < 14) throw new Error('Toolset incomplete'); });
   const set = await run('COOKIE_SET_PARSE_STORE_TEST', () => callJson(client, 'youtube_cookie_set', { cookies: pasted }));
   if (!set.authenticated || !set.playlist_count) throw new Error('Cookie set did not prove authenticated playlist access');
   await run('COOKIE_FILE_PERMISSIONS', async () => { const mode = ((await fs.stat(cookieFile)).mode & 0o777).toString(8); if (mode !== '600') throw new Error(`Cookie mode is ${mode}, expected 600`); });
@@ -45,6 +45,8 @@ try {
   await run('VERIFY_DESCRIPTION', () => waitFor(async () => (await callJson(client, 'youtube_get_playlist', { playlist_id: playlistId, limit: 10 })).playlist?.description === description, 'Description not visible'));
   await run('ADD_VIDEO', () => callJson(client, 'youtube_add_videos', { playlist_id: playlistId, video_ids: [videoId] }));
   await run('VERIFY_ADD', () => waitFor(async () => (await callJson(client, 'youtube_get_playlist', { playlist_id: playlistId, limit: 100 })).videos?.some((v) => v.id === videoId), 'Added video not visible'));
+  await run('STATS', async () => { const stats = await callJson(client, 'youtube_playlist_stats', { playlist_id: playlistId }); if (stats.video_count !== 1 || !(stats.total_seconds > 0)) throw new Error(`Unexpected stats ${JSON.stringify(stats)}`); });
+  await run('CLEANUP_PREVIEW', async () => { const preview = await callJson(client, 'youtube_clean_playlist_preview', { playlist_id: playlistId, remove: ['duplicate', 'unavailable'] }); if (preview.remove_count !== 0) throw new Error('Unexpected clean-up candidates'); });
   await run('REMOVE_VIDEO', () => callJson(client, 'youtube_remove_videos', { playlist_id: playlistId, video_ids: [videoId] }));
   await run('VERIFY_REMOVE', () => waitFor(async () => !(await callJson(client, 'youtube_get_playlist', { playlist_id: playlistId, limit: 100 })).videos?.some((v) => v.id === videoId), 'Removed video still visible'));
 } catch (error) {

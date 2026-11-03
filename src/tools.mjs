@@ -56,9 +56,22 @@ export function registerTools(server, { cookieFile, sessions, guarded }) {
 
   tool('youtube_account_info', 'Get concise account identity for the authenticated YouTube session.', {}, READ, async () => (await ops()).accountInfo());
   tool('youtube_list_playlists', 'List account-visible playlists as compact normalized data.', {}, READ, async () => (await ops()).listPlaylists());
-  tool('youtube_get_playlist', 'Get one page of a playlist. page is 1-based and counts pages of `limit` videos; request next_page while has_more is true.', {
+  tool('youtube_get_playlist', 'Get one page of a playlist (Watch Later "WL" and Liked "LL" included). Each video has duration, channel, playable, view/age info, percent_watched and a link. page is 1-based and counts pages of `limit` videos; request next_page while has_more is true.', {
     playlist_id: playlistId, limit: z.number().int().min(1).max(100).optional(), page: z.number().int().min(1).max(500).optional()
   }, READ, async ({ playlist_id, limit, page }) => (await ops()).getPlaylist(playlist_id, { limit, page }));
+  tool('youtube_playlist_stats', 'Summarize a whole playlist (Watch Later "WL" included): video count, total and remaining duration (also at 1.25x/1.5x/2x), watched and partially watched counts, unavailable and duplicate counts, and top channels.', {
+    playlist_id: playlistId, watched_threshold: z.number().min(1).max(100).optional().describe('Percent watched that counts as watched (default 90).')
+  }, READ, async ({ playlist_id, watched_threshold }) => (await ops()).playlistStats(playlist_id, { watchedThreshold: watched_threshold }));
+  const cleanup = {
+    playlist_id: playlistId,
+    remove: z.array(z.enum(['duplicate', 'unavailable', 'watched'])).min(1).describe('What to remove: later copies of duplicate videos, unavailable (deleted/private) videos, and/or watched videos.'),
+    watched_threshold: z.number().min(1).max(100).optional().describe('Percent watched that counts as watched (default 90).')
+  };
+  tool('youtube_clean_playlist_preview', 'Preview a playlist clean-up without changing anything: lists exactly which videos would be removed and why, plus a plan_token for youtube_clean_playlist_apply. Show the list to the user before applying.', cleanup, READ,
+    async ({ playlist_id, remove, watched_threshold }) => (await ops()).previewCleanup(playlist_id, { remove, watchedThreshold: watched_threshold }));
+  tool('youtube_clean_playlist_apply', 'Remove exactly the videos from a matching youtube_clean_playlist_preview. Requires the same arguments and its plan_token; fails with PLAN_CHANGED and removes nothing if the playlist changed since the preview. Special playlists such as Watch Later cannot be modified.', {
+    ...cleanup, plan_token: z.string().min(1)
+  }, DESTRUCTIVE, async ({ playlist_id, remove, watched_threshold, plan_token }) => (await ops()).applyCleanup(playlist_id, { remove, watchedThreshold: watched_threshold, planToken: plan_token }));
   tool('youtube_create_playlist', 'Create an editable playlist, optionally with initial videos.', {
     title: z.string().min(1).max(150), video_ids: videoIds.max(50).optional()
   }, WRITE, async ({ title, video_ids = [] }) => (await ops()).createPlaylist(title, video_ids));

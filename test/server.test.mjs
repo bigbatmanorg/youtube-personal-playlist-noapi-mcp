@@ -19,12 +19,14 @@ test('server reports package version and annotates every tool', async () => {
   const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
   assert.equal(client.getServerVersion().version, version);
   const { tools } = await client.listTools();
-  assert.equal(tools.length, 11);
+  assert.equal(tools.length, 14);
   for (const tool of tools) assert.equal(typeof tool.annotations?.readOnlyHint, 'boolean', tool.name);
   const byName = Object.fromEntries(tools.map((tool) => [tool.name, tool]));
   assert.equal(byName.youtube_delete_playlist.annotations.destructiveHint, true);
   assert.equal(byName.youtube_remove_videos.annotations.destructiveHint, true);
   assert.equal(byName.youtube_list_playlists.annotations.readOnlyHint, true);
+  assert.equal(byName.youtube_clean_playlist_preview.annotations.readOnlyHint, true);
+  assert.equal(byName.youtube_clean_playlist_apply.annotations.destructiveHint, true);
   await client.close();
 });
 

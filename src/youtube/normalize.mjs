@@ -53,6 +53,28 @@ export function normalizeVideo(value) {
   }
   return { id: id || null, title: title || null, set_video_id: setVideoId };
 }
+function resumePercent(value) {
+  const overlays = Array.isArray(value?.thumbnail_overlays) ? value.thumbnail_overlays : [];
+  const resume = overlays.find((overlay) => overlay?.type === 'ThumbnailOverlayResumePlayback' || typeof overlay?.percent_duration_watched === 'number');
+  return typeof resume?.percent_duration_watched === 'number' ? resume.percent_duration_watched : 0;
+}
+// Playlist entries (youtubei.js PlaylistVideo) carry duration, channel, availability and watch progress.
+export function normalizePlaylistItem(value) {
+  const video = normalizeVideo(value);
+  const seconds = Number(value?.duration?.seconds);
+  const channel = text(value?.author?.name) || text(value?.short_byline_text) || null;
+  return {
+    ...video,
+    duration_seconds: Number.isFinite(seconds) && seconds > 0 ? seconds : null,
+    duration: text(value?.duration?.text) || null,
+    channel: channel && channel !== 'N/A' ? channel : null,
+    channel_id: typeof value?.author?.id === 'string' && value.author.id !== 'N/A' ? value.author.id : null,
+    playable: typeof value?.is_playable === 'boolean' ? value.is_playable : null,
+    info: text(value?.video_info) || null,
+    percent_watched: resumePercent(value),
+    url: video.id ? `https://youtu.be/${video.id}` : null
+  };
+}
 export function normalizeAccount(value) {
   const item = value?.contents?.contents?.find?.((entry) => entry.is_selected) || value?.contents?.contents?.[0] || value;
   return {

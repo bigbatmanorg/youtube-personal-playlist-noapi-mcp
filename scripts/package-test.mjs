@@ -37,7 +37,7 @@ try {
     cwd: installDir
   }));
   const tools = await client.listTools();
-  if (tools.tools.length !== 11) throw new Error(`Packaged CLI exposed ${tools.tools.length} tools, expected 11`);
+  if (tools.tools.length !== 14) throw new Error(`Packaged CLI exposed ${tools.tools.length} tools, expected 14`);
   const status = await client.callTool({ name: 'youtube_cookie_status', arguments: {} });
   const parsed = JSON.parse(status.content?.[0]?.text || '');
   if (parsed.configured !== false || parsed.authenticated !== false) throw new Error('Packaged CLI has unexpected initial cookie status');

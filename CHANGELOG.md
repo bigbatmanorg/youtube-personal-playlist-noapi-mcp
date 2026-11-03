@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0 — 2026-11-03
+
+### Added
+- `youtube_get_playlist` items now include duration, channel, availability (`playable`), views/age, `percent_watched` and a link. This also works for Watch Later and Liked.
+- **`youtube_playlist_stats`:** the playlist's video count; total and remaining duration (also at 1.25×, 1.5× and 2×); watched and partially watched counts; unavailable and duplicate counts; and the top channels by video count.
+- **`youtube_clean_playlist_preview` / `youtube_clean_playlist_apply`:** remove duplicate, unavailable or watched videos in two steps. The preview is read-only and returns the exact removal list plus a `plan_token`. Apply re-reads the playlist and removes exactly those videos, failing with `PLAN_CHANGED` if anything changed.
+- New error codes: `PLAN_CHANGED` and `INVALID_ARGUMENT`.
+
+### Changed
+- The live tests now cover item details, stats and duplicate clean-up on a temporary playlist. `verify` adds read-only stats and a clean-up preview on the largest playlist.
+
 ## 1.1.0 — 2026-11-03
 
 ### Fixed
