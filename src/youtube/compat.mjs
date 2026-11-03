@@ -50,6 +50,12 @@ export class YouTubeCompat {
     return found;
   }
 
+  async removeSetVideoIds(playlistId, setVideoIds) {
+    for (let i = 0; i < setVideoIds.length; i += 100) {
+      await this.editPlaylist(playlistId, setVideoIds.slice(i, i + 100).map((setVideoId) => ({ action: 'ACTION_REMOVE_VIDEO', setVideoId })));
+    }
+  }
+
   async deletePlaylist(playlistId) {
     return this.youtube.actions.execute('/playlist/delete', { playlistId });
   }

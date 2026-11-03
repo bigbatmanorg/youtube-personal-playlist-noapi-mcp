@@ -1,6 +1,6 @@
 {
   "name": "@bigbatmanorg/youtube-personal-playlist-noapi-mcp",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Manage your personal YouTube playlists through MCP using browser cookies. No Google API key or OAuth app required.",
   "type": "module",
   "bin": {

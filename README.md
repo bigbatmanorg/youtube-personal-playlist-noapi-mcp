@@ -10,7 +10,7 @@ Prerequisite: Node.js 20 or newer. No clone, global install, or npm registry pub
 
 ```bash
 YOUTUBE_COOKIE_FILE="$HOME/.config/youtube-personal-playlist-noapi-mcp/cookies.txt" \
-  npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.1.0
+  npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0
 ```
 
 This is a stdio MCP executable: use it as the command in an MCP client, rather than expecting a terminal UI. It can start with no credentials; paste cookies to a trusted agent and have it call `youtube_cookie_set`.
@@ -19,7 +19,7 @@ The command above is verified with npm 11.19.1. npm 12.2.0 disables Git dependen
 
 ```bash
 YOUTUBE_COOKIE_FILE="$HOME/.config/youtube-personal-playlist-noapi-mcp/cookies.txt" \
-  npm exec --yes --allow-git=all github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.1.0
+  npm exec --yes --allow-git=all github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0
 ```
 
 ### MCP client configuration
@@ -29,7 +29,7 @@ YOUTUBE_COOKIE_FILE="$HOME/.config/youtube-personal-playlist-noapi-mcp/cookies.t
   "mcpServers": {
     "youtube-playlists": {
       "command": "npx",
-      "args": ["-y", "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.1.0"],
+      "args": ["-y", "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"],
       "env": {
         "YOUTUBE_COOKIE_FILE": "/absolute/path/to/cookies.txt"
       }
@@ -43,7 +43,7 @@ For npm 12, use this configuration instead:
 ```json
 {
   "command": "npm",
-  "args": ["exec", "--yes", "--allow-git=all", "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.1.0"]
+  "args": ["exec", "--yes", "--allow-git=all", "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0"]
 }
 ```
 
@@ -64,13 +64,13 @@ Example custom location:
 
 ```bash
 YOUTUBE_COOKIE_FILE="$HOME/.config/my-youtube/cookies.txt" \
-  npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.1.0
+  npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0
 ```
 
 or:
 
 ```bash
-npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.1.0 \
+npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.2.0 \
   --cookie-file "$HOME/.config/my-youtube/cookies.txt"
 ```
 
@@ -82,7 +82,10 @@ npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.1.0 \
 | `youtube_cookie_status` | Show the cookie path and test current authentication | read-only |
 | `youtube_account_info` | Account name and handle | read-only |
 | `youtube_list_playlists` | All account playlists with visibility, video count and last update | read-only |
-| `youtube_get_playlist` | One page of a playlist; `page` counts pages of `limit` videos (max 100) | read-only |
+| `youtube_get_playlist` | One page of a playlist (Watch Later `WL` and Liked `LL` included), with each video's duration, channel, availability, views/age, percent watched and link; `page` counts pages of `limit` videos (max 100) | read-only |
+| `youtube_playlist_stats` | Whole-playlist totals: duration, remaining time (also at 1.25×/1.5×/2×), watched / partially watched, unavailable, duplicates, top channels | read-only |
+| `youtube_clean_playlist_preview` | List exactly which videos a clean-up would remove (`duplicate`, `unavailable`, `watched`) and return a `plan_token` | read-only |
+| `youtube_clean_playlist_apply` | Remove exactly the previewed videos; fails with `PLAN_CHANGED` and removes nothing if the playlist changed since the preview | destructive |
 | `youtube_create_playlist` | Create a playlist, optionally with initial videos | write |
 | `youtube_rename_playlist` | Rename a playlist | write |
 | `youtube_set_playlist_description` | Set a playlist description | write |
@@ -90,7 +93,7 @@ npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.1.0 \
 | `youtube_remove_videos` | Remove up to 50 videos; fails without changes if any is not in the playlist | destructive |
 | `youtube_delete_playlist` | Delete a playlist | destructive |
 
-Playlist arguments accept a playlist ID or any YouTube URL with `list=`. Video arguments accept IDs or `watch`, `youtu.be` and `shorts` URLs. Special playlists (Watch Later `WL`, Liked `LL`, mixes) are read-only. Every tool declares MCP annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) so clients can ask before destructive calls.
+Playlist arguments accept a playlist ID or any YouTube URL with `list=`. Video arguments accept IDs or `watch`, `youtu.be` and `shorts` URLs. Special playlists (Watch Later `WL`, Liked `LL`, mixes) are read-only: stats and clean-up previews work on them, but nothing is modified. YouTube omits some unavailable videos from playlist pages, so counts can be lower than the number shown on YouTube's playlist badge. Every tool declares MCP annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) so clients can ask before destructive calls.
 
 ## One-command full-cycle test from pasted cookies
 
@@ -193,4 +196,5 @@ Google rotates some session cookies while the browser that owns them stays open,
 - `NOT_LOGGED_IN` means the exported YouTube cookies have expired or do not authenticate the intended account. Export fresh cookies (see *Keeping cookies valid*) and set them again.
 - `VIDEO_NOT_FOUND` lists the requested video IDs that are not in the playlist; nothing is removed in that case.
 - `INVALID_ID` means an argument is neither a valid YouTube ID nor a supported YouTube URL.
+- `PLAN_CHANGED` means the playlist (or the clean-up options) changed after `youtube_clean_playlist_preview`; preview again and apply the new `plan_token`.
 - npm 12 reporting `EALLOWGIT` requires the per-command `--allow-git=all` flag shown above. Do not disable npm security globally.

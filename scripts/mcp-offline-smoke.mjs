@@ -8,12 +8,12 @@ let client;
 try {
   ({ client } = await openMcpClient(cookieFile));
   const tools = await client.listTools();
-  if (tools.tools.length !== 11) throw new Error(`Expected 11 tools, got ${tools.tools.length}`);
+  if (tools.tools.length !== 14) throw new Error(`Expected 14 tools, got ${tools.tools.length}`);
   const result = await client.callTool({ name: 'youtube_cookie_status', arguments: {} });
   const status = JSON.parse(result.content[0].text);
   if (status.configured !== false || status.authenticated !== false) throw new Error('Fresh MCP cookie status is wrong');
   console.log('PASS MCP starts without credentials');
-  console.log('PASS 11 tools exposed');
+  console.log('PASS 14 tools exposed');
   console.log(`PASS cookie destination ${status.cookie_file}`);
 } finally {
   if (client) await closeMcpClient(client).catch(() => {});

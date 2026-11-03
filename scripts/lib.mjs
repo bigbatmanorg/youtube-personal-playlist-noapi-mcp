@@ -48,7 +48,7 @@ export async function closeMcpClient(client, timeout = 5000) {
 export async function waitFor(check, message, { attempts = 12, delay = 750 } = {}) {
   let lastError;
   for (let i = 0; i < attempts; i += 1) {
-    try { if (await check()) return; } catch (error) { lastError = error; }
+    try { const value = await check(); if (value) return value; } catch (error) { lastError = error; }
     await sleep(delay);
   }
   throw lastError || new Error(message);

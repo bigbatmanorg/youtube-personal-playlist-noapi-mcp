@@ -35,8 +35,20 @@ try {
       if (JSON.stringify(small) !== JSON.stringify(big.slice(0, small.length))) throw new Error('page sizes disagree on video order');
     });
   }
+  if (largest) {
+    // Read-only: whole-playlist stats and a clean-up preview never modify the playlist.
+    await run('PLAYLIST_STATS', async () => {
+      const stats = await ops.playlistStats(largest.id);
+      if (!stats.video_count || !(stats.total_seconds > 0)) throw new Error('Stats returned no videos or duration');
+      console.log(`Largest playlist: ${stats.video_count} videos, ${stats.total_duration} total, ${stats.remaining_duration} remaining, ${stats.unavailable_count} unavailable, ${stats.duplicate_count} duplicates`);
+    });
+    await run('CLEANUP_PREVIEW_READ_ONLY', async () => {
+      const preview = await ops.previewCleanup(largest.id, { remove: ['duplicate', 'unavailable'] });
+      if (!preview.plan_token) throw new Error('No plan token');
+    });
+  }
   const mcp = await openMcpClient(cookieFile); client = mcp.client;
-  await run('MCP_INITIALIZE', async () => { const tools = await client.listTools(); if (tools.tools.length < 11) throw new Error(`Expected 11 tools, got ${tools.tools.length}`); });
+  await run('MCP_INITIALIZE', async () => { const tools = await client.listTools(); if (tools.tools.length < 14) throw new Error(`Expected 14 tools, got ${tools.tools.length}`); });
   await run('MCP_COOKIE_STATUS', async () => { const s = await callJson(client, 'youtube_cookie_status'); if (!s.authenticated) throw new Error('MCP cookie status is not authenticated'); });
   await run('MCP_LIST_PLAYLISTS', async () => { const x = await callJson(client, 'youtube_list_playlists'); if (!x.playlists?.length) throw new Error('MCP returned no playlists'); });
   console.log(`Cookie file: ${cookieFile}`);
