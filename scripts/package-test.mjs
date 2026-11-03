@@ -22,7 +22,7 @@ const pkg = JSON.parse(fs.readFileSync(path.join(tmp, 'package/package.json'), '
 if (pkg.private) throw new Error('Package is private');
 if (pkg.name !== '@bigbatmanorg/youtube-personal-playlist-noapi-mcp') throw new Error('Wrong package name');
 if (pkg.bin?.['youtube-personal-playlist-noapi-mcp'] !== './src/server.mjs') throw new Error('Invalid bin entry');
-if (pkg.dependencies?.['youtubei.js'] !== '18.1.0') throw new Error('youtubei.js must be exactly pinned');
+if (pkg.dependencies?.['youtubei.js'] !== '18.3.0') throw new Error('youtubei.js must be exactly pinned');
 let client;
 try {
   // Install the tarball into a separate directory. The spawned binary and its

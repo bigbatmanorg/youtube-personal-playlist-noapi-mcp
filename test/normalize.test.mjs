@@ -16,3 +16,15 @@ test('normalizes current video Lockup shape and set video id', () => {
 test('normalizes endpoint fallback', () => assert.deepEqual(normalizeVideo({ on_tap_endpoint: { payload: { videoId: 'v2' } }, overlay_metadata: { primary_text: { text: 'Short' } } }), { id: 'v2', title: 'Short', set_video_id: null }));
 
 test('classifies special/system playlists', () => { assert.equal(classifyPlaylist('WL'), 'special'); assert.equal(classifyPlaylist('RDfoo'), 'system'); assert.equal(classifyPlaylist('PLfoo'), 'playlist'); });
+
+test('normalizes nested LockupView metadata and thumbnail badge count', () => {
+  const value = {
+    content_id: 'PLnested',
+    metadata: { title: { text: 'Nested' }, metadata: { metadata_rows: [{ metadata_parts: [{ text: { text: 'Private' } }, { text: { text: 'Playlist' } }] }, { metadata_parts: [{ text: { text: 'Updated 4 days ago' } }] }] } },
+    content_image: { primary_thumbnail: { overlays: [{ badges: [{ text: '1,010 videos' }] }] } }
+  };
+  const playlist = normalizePlaylist(value);
+  assert.equal(playlist.video_count, 1010);
+  assert.equal(playlist.visibility, 'Private');
+  assert.equal(playlist.updated, 'Updated 4 days ago');
+});

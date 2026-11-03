@@ -8,8 +8,13 @@ function endpointPayload(value) {
   return value?.payload || value?.endpoint?.payload || value?.navigation_endpoint?.payload || value?.on_tap_endpoint?.payload || value?.renderer_context?.command_context?.on_tap?.payload;
 }
 function metadataTexts(value) {
-  const rows = value?.metadata?.metadata_rows || value?.metadata?.metadataRows || [];
+  // LockupView nests ContentMetadataView rows one level below LockupMetadataView.
+  const rows = value?.metadata?.metadata?.metadata_rows || value?.metadata?.metadata_rows || value?.metadata?.metadataRows || [];
   return rows.flatMap((row) => (row.metadata_parts || row.metadataParts || []).map((part) => text(part?.text) || text(part)).filter(Boolean));
+}
+function thumbnailBadgeTexts(value) {
+  const overlays = value?.content_image?.primary_thumbnail?.overlays || [];
+  return overlays.flatMap((overlay) => (overlay?.badges || []).map((badge) => text(badge?.text) || text(badge))).filter(Boolean);
 }
 export function classifyPlaylist(id) {
   if (['LL', 'WL', 'YS'].includes(id)) return 'special';
@@ -22,7 +27,8 @@ export function normalizePlaylist(value) {
   const title = text(value?.metadata?.title) || text(value?.title) || (typeof value?.title === 'string' ? value.title : undefined);
   const info = value?.info || {};
   const items = metadataTexts(value);
-  const combined = items.join(' · ');
+  // The video count is shown as a thumbnail badge ("253 videos") in the current feed.
+  const combined = [...thumbnailBadgeTexts(value), ...items].join(' · ');
   const countRaw = info.total_items || combined;
   const count = Number(String(countRaw).match(/([\d,]+)\s*(?:videos?|episodes?)/i)?.[1]?.replaceAll(',', ''));
   return {

@@ -1,5 +1,6 @@
 import { classifyPlaylist, normalizeAccount, normalizePlaylist, normalizeVideo } from './normalize.mjs';
 import { YouTubeCompat } from './compat.mjs';
+import { normalizePlaylistId, normalizeVideoIds } from './ids.mjs';
 
 const MAX_LIMIT = 100;
 export class YouTubeOperations {
@@ -10,19 +11,29 @@ export class YouTubeOperations {
     return { playlists: (feed.playlists || []).map(normalizePlaylist).filter((playlist) => playlist.id && playlist.title) };
   }
   async getPlaylist(playlistId, { limit = 100, page = 1 } = {}) {
+    playlistId = normalizePlaylistId(playlistId);
     limit = Math.min(Math.max(1, limit), MAX_LIMIT);
-    let playlist = await this.#openPlaylist(playlistId);
-    for (let current = 1; current < page; current += 1) {
-      if (!playlist.has_continuation) return this.#result(playlistId, playlist, [], limit, page, false);
-      playlist = await playlist.getContinuation();
+    page = Math.max(1, page);
+    // `page` counts pages of `limit` videos. YouTube continuations hold a different,
+    // variable number of items, so collect continuations until this page is covered.
+    const first = await this.#openPlaylist(playlistId);
+    const start = (page - 1) * limit;
+    const collected = [];
+    let current = first;
+    for (;;) {
+      for (const raw of current.videos || current.items || []) {
+        const video = normalizeVideo(raw);
+        if (video.id) collected.push(video);
+      }
+      if (collected.length > start + limit || !current.has_continuation) break;
+      current = await current.getContinuation();
     }
-    return this.#result(playlistId, playlist, playlist.videos || playlist.items || [], limit, page, Boolean(playlist.has_continuation));
+    const hasMore = collected.length > start + limit || Boolean(current.has_continuation);
+    return this.#result(playlistId, first, collected.slice(start, start + limit), limit, page, hasMore);
   }
-  #result(playlistId, playlist, videos, limit, page, hasContinuation) {
+  #result(playlistId, playlist, returned, limit, page, hasMore) {
     const base = normalizePlaylist(playlist);
-    const returned = videos.slice(0, limit).map(normalizeVideo).filter((video) => video.id && video.title);
     const total = Number(String(playlist.info?.total_items || '').match(/[\d,]+/)?.[0]?.replaceAll(',', '')) || null;
-    const hasMore = videos.length > limit || hasContinuation;
     return {
       playlist: {
         ...base,
@@ -54,35 +65,39 @@ export class YouTubeOperations {
     }
     throw lastError;
   }
-  #assertEditableId(playlistId) {
-    if (classifyPlaylist(playlistId) !== 'playlist') throw new Error('PLAYLIST_NOT_EDITABLE: special/system playlists cannot be modified');
+  #editableId(playlistId) {
+    const id = normalizePlaylistId(playlistId);
+    if (classifyPlaylist(id) !== 'playlist') throw new Error('PLAYLIST_NOT_EDITABLE: special/system playlists cannot be modified');
+    return id;
   }
   async createPlaylist(title, videoIds = []) {
-    const result = await this.youtube.playlist.create(title, videoIds);
+    const result = await this.youtube.playlist.create(title, normalizeVideoIds(videoIds));
     return { success: Boolean(result.success), playlist_id: result.playlist_id || null, operation: 'create_playlist' };
   }
   async deletePlaylist(playlistId) {
-    this.#assertEditableId(playlistId);
+    playlistId = this.#editableId(playlistId);
     await this.compat.deletePlaylist(playlistId);
     return { success: true, playlist_id: playlistId, operation: 'delete_playlist' };
   }
   async renamePlaylist(playlistId, name) {
-    this.#assertEditableId(playlistId);
+    playlistId = this.#editableId(playlistId);
     await this.compat.renamePlaylist(playlistId, name);
     return { success: true, playlist_id: playlistId, operation: 'rename_playlist', title: name };
   }
   async setPlaylistDescription(playlistId, description) {
-    this.#assertEditableId(playlistId);
+    playlistId = this.#editableId(playlistId);
     await this.compat.setDescription(playlistId, description);
     return { success: true, playlist_id: playlistId, operation: 'set_playlist_description' };
   }
   async addVideos(playlistId, videoIds) {
-    this.#assertEditableId(playlistId);
+    playlistId = this.#editableId(playlistId);
+    videoIds = normalizeVideoIds(videoIds);
     await this.compat.addVideos(playlistId, videoIds);
     return { success: true, playlist_id: playlistId, operation: 'add_videos', requested: videoIds.length };
   }
   async removeVideos(playlistId, videoIds) {
-    this.#assertEditableId(playlistId);
+    playlistId = this.#editableId(playlistId);
+    videoIds = normalizeVideoIds(videoIds);
     await this.compat.removeVideos(playlistId, videoIds);
     return { success: true, playlist_id: playlistId, operation: 'remove_videos', requested: videoIds.length };
   }

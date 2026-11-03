@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { realpathSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolveCookieFile } from './config.mjs';
 import { SessionProvider } from './session.mjs';
 import { cleanError, toolError } from './youtube/errors.mjs';
 import { registerTools } from './tools.mjs';
 
+const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const json = (value) => ({ content: [{ type: 'text', text: JSON.stringify(value) }] });
 const guarded = (fn) => async (args) => {
   try { return json(await fn(args)); }
@@ -18,7 +19,7 @@ const guarded = (fn) => async (args) => {
 };
 
 export function buildServer({ cookieFile = resolveCookieFile() } = {}) {
-  const server = new McpServer({ name: 'youtube-personal-playlist-noapi-mcp', version: '1.0.0' });
+  const server = new McpServer({ name: 'youtube-personal-playlist-noapi-mcp', version });
   const sessions = new SessionProvider(cookieFile);
   registerTools(server, { cookieFile, sessions, guarded });
   return server;

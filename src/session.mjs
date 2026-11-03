@@ -15,11 +15,16 @@ export async function createYouTubeFromFile(cookieFile) {
 export class SessionProvider {
   constructor(cookieFile) {
     this.cookieFile = cookieFile;
-    this.youtube = null;
+    this.pending = null;
   }
-  invalidate() { this.youtube = null; }
-  async get() {
-    if (!this.youtube) this.youtube = await createYouTubeFromFile(this.cookieFile);
-    return this.youtube;
+  invalidate() { this.pending = null; }
+  // Concurrent first calls share one in-flight session instead of each creating one.
+  get() {
+    if (!this.pending) {
+      const pending = createYouTubeFromFile(this.cookieFile);
+      this.pending = pending;
+      pending.catch(() => { if (this.pending === pending) this.pending = null; });
+    }
+    return this.pending;
   }
 }
