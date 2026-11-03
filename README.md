@@ -10,7 +10,7 @@ Prerequisite: Node.js 20 or newer. No clone, global install, or npm registry pub
 
 ```bash
 YOUTUBE_COOKIE_FILE="$HOME/.config/youtube-personal-playlist-noapi-mcp/cookies.txt" \
-  npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#main
+  npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.1.0
 ```
 
 This is a stdio MCP executable: use it as the command in an MCP client, rather than expecting a terminal UI. It can start with no credentials; paste cookies to a trusted agent and have it call `youtube_cookie_set`.
@@ -19,7 +19,7 @@ The command above is verified with npm 11.19.1. npm 12.2.0 disables Git dependen
 
 ```bash
 YOUTUBE_COOKIE_FILE="$HOME/.config/youtube-personal-playlist-noapi-mcp/cookies.txt" \
-  npm exec --yes --allow-git=all github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#main
+  npm exec --yes --allow-git=all github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.1.0
 ```
 
 ### MCP client configuration
@@ -29,7 +29,7 @@ YOUTUBE_COOKIE_FILE="$HOME/.config/youtube-personal-playlist-noapi-mcp/cookies.t
   "mcpServers": {
     "youtube-playlists": {
       "command": "npx",
-      "args": ["-y", "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#main"],
+      "args": ["-y", "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.1.0"],
       "env": {
         "YOUTUBE_COOKIE_FILE": "/absolute/path/to/cookies.txt"
       }
@@ -43,7 +43,7 @@ For npm 12, use this configuration instead:
 ```json
 {
   "command": "npm",
-  "args": ["exec", "--yes", "--allow-git=all", "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#main"]
+  "args": ["exec", "--yes", "--allow-git=all", "github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.1.0"]
 }
 ```
 
@@ -64,29 +64,33 @@ Example custom location:
 
 ```bash
 YOUTUBE_COOKIE_FILE="$HOME/.config/my-youtube/cookies.txt" \
-  npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#main
+  npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.1.0
 ```
 
 or:
 
 ```bash
-npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#main \
+npx -y github:bigbatmanorg/youtube-personal-playlist-noapi-mcp#v1.1.0 \
   --cookie-file "$HOME/.config/my-youtube/cookies.txt"
 ```
 
 ## Tools
 
-- `youtube_cookie_set` — accepts pasted Netscape cookies.txt content or a raw Cookie header, stores it, and immediately verifies account + playlist access.
-- `youtube_cookie_status` — shows the configured path and tests current authentication.
-- `youtube_account_info`
-- `youtube_list_playlists`
-- `youtube_get_playlist`
-- `youtube_create_playlist`
-- `youtube_rename_playlist`
-- `youtube_set_playlist_description`
-- `youtube_add_videos`
-- `youtube_remove_videos`
-- `youtube_delete_playlist`
+| Tool | Purpose | Annotation |
+|---|---|---|
+| `youtube_cookie_set` | Store pasted Netscape cookies.txt content or a raw Cookie header, then verify account + playlist access | write (local) |
+| `youtube_cookie_status` | Show the cookie path and test current authentication | read-only |
+| `youtube_account_info` | Account name and handle | read-only |
+| `youtube_list_playlists` | All account playlists with visibility, video count and last update | read-only |
+| `youtube_get_playlist` | One page of a playlist; `page` counts pages of `limit` videos (max 100) | read-only |
+| `youtube_create_playlist` | Create a playlist, optionally with initial videos | write |
+| `youtube_rename_playlist` | Rename a playlist | write |
+| `youtube_set_playlist_description` | Set a playlist description | write |
+| `youtube_add_videos` | Add up to 50 videos | write |
+| `youtube_remove_videos` | Remove up to 50 videos; fails without changes if any is not in the playlist | destructive |
+| `youtube_delete_playlist` | Delete a playlist | destructive |
+
+Playlist arguments accept a playlist ID or any YouTube URL with `list=`. Video arguments accept IDs or `watch`, `youtu.be` and `shorts` URLs. Special playlists (Watch Later `WL`, Liked `LL`, mixes) are read-only. Every tool declares MCP annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) so clients can ask before destructive calls.
 
 ## One-command full-cycle test from pasted cookies
 
@@ -158,10 +162,10 @@ See `examples/docker-agent.yaml`. The MCP can be consumed directly from GitHub t
 Test a candidate in a disposable copy:
 
 ```bash
-npm run test:upgrade -- 18.2.0 --cookie-file "$HOME/.config/youtube-personal-playlist-noapi-mcp/cookies.txt"
+npm run test:upgrade -- latest --cookie-file "$HOME/.config/youtube-personal-playlist-noapi-mcp/cookies.txt"
 ```
 
-Use `latest` instead of a version to probe the newest release. Without a cookie path it runs only the offline compatibility checks; with a cookie path it also runs read-only and live write verification.
+Pass a specific version such as `18.3.0` instead of `latest` to test that release. Without a cookie path it runs only the offline compatibility checks; with a cookie path it also runs read-only and live write verification.
 
 Before publishing any release:
 
@@ -169,14 +173,24 @@ Before publishing any release:
 npm run release:check
 ```
 
-Then run `npm run test:full` with a real pasted cookie. Treat `RESULT: READY` from that full-cycle test as the live release gate.
+Then run `npm run verify`, `npm run test:live` and `npm run test:full` with real cookies. Treat `RESULT: READY` from all three as the live release gate. The write tests only touch a temporary `MCP_TEST_*` / `MCP_FULL_TEST_*` playlist that they create and delete; `verify` is read-only. Point `test:full` at a scratch `--cookie-file`, because it stores the pasted cookies there.
+
+Bump `version` in `package.json`, update the pinned `#vX.Y.Z` references and `CHANGELOG.md`, merge to `main`, then tag `vX.Y.Z` and publish a GitHub release.
 
 ## Security note
 
 YouTube browser cookies are account credentials. `youtube_cookie_set` exists specifically for users who deliberately want to paste those credentials through their MCP-capable agent. The server never echoes stored cookie values and sanitizes known cookie fields from returned errors. Use only with agents/frontends you trust.
 
+This tool drives YouTube's internal web API with your browser session, which is not an officially supported integration. Google may change it at any time, and automated use can trigger security checks on the account. Use a reasonable request rate and prefer an account you are comfortable using this way.
+
+### Keeping cookies valid
+
+Google rotates some session cookies while the browser that owns them stays open, which can invalidate an export within hours. For longer-lived cookies, sign in to YouTube in a private/incognito window, export the cookies from that window, then close it without signing out.
+
 ## Troubleshooting
 
 - `COOKIE_FILE_NOT_FOUND` means the configured cookie path does not exist yet. Start the MCP without credentials and use `youtube_cookie_set`, or provide the correct absolute `YOUTUBE_COOKIE_FILE` path.
-- `NOT_LOGGED_IN` means the exported YouTube cookies have expired or do not authenticate the intended account. Export fresh cookies and set them again.
+- `NOT_LOGGED_IN` means the exported YouTube cookies have expired or do not authenticate the intended account. Export fresh cookies (see *Keeping cookies valid*) and set them again.
+- `VIDEO_NOT_FOUND` lists the requested video IDs that are not in the playlist; nothing is removed in that case.
+- `INVALID_ID` means an argument is neither a valid YouTube ID nor a supported YouTube URL.
 - npm 12 reporting `EALLOWGIT` requires the per-command `--allow-git=all` flag shown above. Do not disable npm security globally.

@@ -5,6 +5,7 @@ import { waitFor } from './lib.mjs';
 
 const cookieFile = resolveCookieFile();
 const videoId = process.env.YOUTUBE_TEST_VIDEO_ID || 'dQw4w9WgXcQ';
+const extraIds = ['9bZkp7q19f0', 'jNQXAC9IVRw'];
 const steps = [];
 let playlistId; let ops;
 const run = async (name, fn) => { try { const v = await fn(); steps.push([name, 'PASS']); return v; } catch (e) { steps.push([name, `FAIL: ${String(e?.message || e).slice(0, 160)}`]); throw e; } };
@@ -24,8 +25,25 @@ try {
   await run('VERIFY_DESCRIPTION', () => waitFor(async () => (await ops.getPlaylist(playlistId, { limit: 10 })).playlist?.description === description, 'Description did not converge'));
   await run('ADD_VIDEO', () => ops.addVideos(playlistId, [videoId]));
   await run('VERIFY_ADD', () => waitFor(async () => (await ops.getPlaylist(playlistId, { limit: 100 })).videos.some((v) => v.id === videoId), 'Added video not found'));
-  await run('REMOVE_VIDEO', () => ops.removeVideos(playlistId, [videoId]));
-  await run('VERIFY_REMOVE', () => waitFor(async () => !(await ops.getPlaylist(playlistId, { limit: 100 })).videos.some((v) => v.id === videoId), 'Removed video still present'));
+  await run('ADD_VIDEOS_BY_URL', () => ops.addVideos(`https://www.youtube.com/playlist?list=${playlistId}`, extraIds.map((id) => `https://youtu.be/${id}`)));
+  await run('VERIFY_PAGED_READ', () => waitFor(async () => {
+    const ids = [];
+    for (let page = 1; page <= 3; page += 1) {
+      const result = await ops.getPlaylist(playlistId, { limit: 2, page });
+      ids.push(...result.videos.map((v) => v.id));
+      if (!result.has_more) break;
+    }
+    return [videoId, ...extraIds].every((id) => ids.includes(id)) && ids.length === 3;
+  }, 'Paged read did not return all three videos'));
+  await run('REMOVE_MISSING_REPORTS_ID', async () => {
+    try { await ops.removeVideos(playlistId, [videoId, 'aaaaaaaaaaa']); } catch (error) {
+      if (/VIDEO_NOT_FOUND: .*aaaaaaaaaaa/.test(String(error?.message))) return;
+      throw error;
+    }
+    throw new Error('Removing a missing video did not fail');
+  });
+  await run('REMOVE_VIDEO', () => ops.removeVideos(playlistId, [`https://www.youtube.com/watch?v=${videoId}`, ...extraIds]));
+  await run('VERIFY_REMOVE', () => waitFor(async () => (await ops.getPlaylist(playlistId, { limit: 100 })).videos.length === 0, 'Removed videos still present'));
 } catch { process.exitCode = 1; }
 finally {
   if (playlistId && ops) {

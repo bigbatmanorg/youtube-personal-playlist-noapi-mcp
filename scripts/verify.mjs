@@ -16,6 +16,25 @@ try {
   const account = await run('ACCOUNT', () => ops.accountInfo());
   const list = await run('LIST_PLAYLISTS', async () => { const x = await ops.listPlaylists(); if (!x.playlists.length) throw new Error('No playlists returned'); return x; });
   if (process.env.YOUTUBE_VERIFY_PLAYLIST_ID) await run('GET_PLAYLIST', () => ops.getPlaylist(process.env.YOUTUBE_VERIFY_PLAYLIST_ID, { limit: 10 }));
+  // Read-only: page through the largest playlist with two page sizes and require the same order.
+  const largest = [...list.playlists].sort((a, b) => (b.video_count || 0) - (a.video_count || 0))[0];
+  if ((largest?.video_count || 0) > 100) {
+    await run('PAGINATION_ACROSS_CONTINUATIONS', async () => {
+      const read = async (limit, pages) => {
+        const ids = [];
+        for (let page = 1; page <= pages; page += 1) {
+          const result = await ops.getPlaylist(largest.id, { limit, page });
+          ids.push(...result.videos.map((video) => video.id));
+          if (!result.has_more) break;
+        }
+        return ids;
+      };
+      const big = await read(100, 2);
+      const small = await read(30, 5);
+      if (big.length <= 100) throw new Error(`expected more than 100 videos across pages, got ${big.length}`);
+      if (JSON.stringify(small) !== JSON.stringify(big.slice(0, small.length))) throw new Error('page sizes disagree on video order');
+    });
+  }
   const mcp = await openMcpClient(cookieFile); client = mcp.client;
   await run('MCP_INITIALIZE', async () => { const tools = await client.listTools(); if (tools.tools.length < 11) throw new Error(`Expected 11 tools, got ${tools.tools.length}`); });
   await run('MCP_COOKIE_STATUS', async () => { const s = await callJson(client, 'youtube_cookie_status'); if (!s.authenticated) throw new Error('MCP cookie status is not authenticated'); });
